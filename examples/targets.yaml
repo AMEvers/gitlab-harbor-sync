@@ -1,0 +1,5 @@
+- git-project-tag: harbor-prod-sync
+  harbor-target: prod
+
+- git-project-tag: harbor-platform-sync
+  harbor-target: platform/gitlab

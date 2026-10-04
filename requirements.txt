@@ -1,0 +1,4 @@
+# Runtime dependencies. pyproject.toml is authoritative for package metadata.
+harborapi==0.26.2
+python-gitlab==8.6.0
+PyYAML>=6.0,<7

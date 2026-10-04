@@ -1,0 +1,78 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: gitlab-harbor-sync
+  namespace: harbor-sync
+spec:
+  schedule: "*/15 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 4
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      ttlSecondsAfterFinished: 3600
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: gitlab-harbor-sync
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: sync
+              image: ghcr.io/OWNER/gitlab-harbor-sync:latest
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: GITLAB_URL
+                  value: "https://gitlab.example.com"
+                - name: HARBOR_URL
+                  value: "https://harbor.example.com"
+                - name: CONFIG_PATH
+                  value: "/config/targets.yaml"
+                - name: HARBOR_REPLICATION_CRON
+                  value: "0 0 * * * *"
+                - name: GITLAB_ACCESS_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: gitlab-harbor-sync-secrets
+                      key: GITLAB_ACCESS_TOKEN
+                - name: HARBOR_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: gitlab-harbor-sync-secrets
+                      key: HARBOR_USERNAME
+                - name: HARBOR_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: gitlab-harbor-sync-secrets
+                      key: HARBOR_PASSWORD
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                  readOnly: true
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                runAsUser: 65532
+                runAsGroup: 65532
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  cpu: 500m
+                  memory: 256Mi
+          volumes:
+            - name: config
+              configMap:
+                name: gitlab-harbor-sync-config
+                items:
+                  - key: targets.yaml
+                    path: targets.yaml

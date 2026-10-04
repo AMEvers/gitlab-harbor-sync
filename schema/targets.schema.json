@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/gitlab-harbor-sync/targets.schema.json",
+  "title": "GitLab Harbor Sync Targets",
+  "oneOf": [
+    { "$ref": "#/$defs/targetList" },
+    {
+      "type": "object",
+      "required": ["targets"],
+      "additionalProperties": false,
+      "properties": {
+        "targets": { "$ref": "#/$defs/targetList" }
+      }
+    }
+  ],
+  "$defs": {
+    "targetList": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/target" }
+    },
+    "target": {
+      "type": "object",
+      "required": ["git-project-tag", "harbor-target"],
+      "additionalProperties": false,
+      "properties": {
+        "git-project-tag": { "type": "string", "minLength": 1 },
+        "harbor-target": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^:/]+(?:/[^:/]+)*$"
+        }
+      }
+    }
+  }
+}
